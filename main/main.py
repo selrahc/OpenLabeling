@@ -209,6 +209,22 @@ def set_class_index(x):
     display_text(text, 3000)
 
 
+def turn_gamma(tmp_img):
+    lookUpTable = np.empty((1,256), np.uint8)
+    for i in range(256):
+        lookUpTable[0,i] = np.clip(pow(i / 255.0, gamma) * 255.0, 0, 255)
+    res = cv2.LUT(tmp_img, lookUpTable)
+    #img_gamma_corrected = cv2.hconcat([tmp_img, res])
+    #return img_gamma_corrected
+    return res
+
+
+def turn_gray(tmp_img):
+    # gray = cv2.cvtColor(tmp_img, cv2.COLOR_BGR2GRAY)
+    gray = cv2.convertScaleAbs(tmp_img, alpha=alpha, beta=beta)
+    return gray
+
+
 def draw_edges(tmp_img):
     gray = cv2.cvtColor(tmp_img, cv2.COLOR_BGR2GRAY)
     blur_gray = cv2.GaussianBlur(gray, (1, 1), 0)
@@ -1080,8 +1096,14 @@ if __name__ == '__main__':
 
     # initialize
     set_img_index(0)
-    edges_on = False
+    alpha = 2.2
+    beta = 50
+    gamma = 1.0
+    gamma_on = False
+    gray_on = False
+    gray_on = False
     hiding_on = False
+    edges_on = False
 
     display_text('Welcome!\n Press [h] for help.', 4000)
 
@@ -1091,6 +1113,11 @@ if __name__ == '__main__':
         # clone the img
         tmp_img = img.copy()
         height, width = tmp_img.shape[:2]
+        if gamma_on == True:
+            tmp_img = turn_gamma(tmp_img)
+        if gray_on == True:
+            # gray mode
+            tmp_img = turn_gray(tmp_img)
         if edges_on == True:
             # draw edges
             tmp_img = draw_edges(tmp_img)
@@ -1156,6 +1183,54 @@ if __name__ == '__main__':
                 if is_bbox_selected:
                     obj_to_edit = img_objects[selected_bbox]
                     edit_bbox(obj_to_edit, 'change_class:{}'.format(class_index))
+            elif pressed_key == ord('7'):
+                alpha = 2.2
+                beta = 50
+                gamma = 1.0
+            elif pressed_key == ord('5') or pressed_key == ord('6'):
+                if gamma_on and pressed_key == ord('5'):
+                    gamma = gamma - 1
+                    if gamma < 1.0:
+                        gamma = 1.0
+                if gamma_on and pressed_key == ord('6'):
+                    gamma= gamma + 1
+                    if gamma > 200:
+                        gamma = 200
+                display_text('Gamma ' + str(gamma), 500)
+            elif pressed_key == ord('3') or pressed_key == ord('4'):
+                if gray_on and pressed_key == ord('3'):
+                    beta = beta - 1
+                    if beta < 0:
+                        beta = 0
+                if gray_on and pressed_key == ord('4'):
+                    beta = beta + 1
+                    if beta > 200:
+                        beta = 200
+                display_text('Beta ' + str(beta), 500)
+            elif pressed_key == ord('1') or pressed_key == ord('2'):
+                if gray_on and pressed_key == ord('1'):
+                    alpha = alpha - 0.1
+                    if alpha < 1.0:
+                        alpha = 1.0
+                if gray_on and pressed_key == ord('2'):
+                    alpha = alpha + 0.1
+                    if alpha > 500.0:
+                        alpha = 500.0
+                display_text('Alpha ' + str(alpha), 500)
+            elif pressed_key == ord('g'):
+                if gamma_on == True:
+                    gamma_on = False
+                    display_text('Gamma off!', 1000)
+                else:
+                    gamma_on = True
+                    display_text('Gamma on!', 1000)
+            elif pressed_key == ord('b'):
+                if gray_on == True:
+                    gray_on = False
+                    display_text('Gray off!', 1000)
+                else:
+                    gray_on = True
+                    display_text('Gray on!', 1000)
             elif pressed_key == ord('r'):
                 if hiding_on == True:
                     hiding_on = False
