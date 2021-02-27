@@ -210,11 +210,24 @@ def set_class_index(x):
 
 
 def draw_edges(tmp_img):
-    blur = cv2.bilateralFilter(tmp_img, 3, 75, 75)
-    edges = cv2.Canny(blur, 150, 250, 3)
+    gray = cv2.cvtColor(tmp_img, cv2.COLOR_BGR2GRAY)
+    blur_gray = cv2.GaussianBlur(gray, (1, 1), 0)
+    edges = cv2.Canny(blur_gray, 1, 1)
     edges = cv2.cvtColor(edges, cv2.COLOR_GRAY2RGB)
-    # Overlap image and edges together
     tmp_img = np.bitwise_or(tmp_img, edges)
+
+    #gray = cv2.cvtColor(tmp_img, cv2.COLOR_RGB2GRAY)
+    #kernel_size = 3
+    #blur_gray = cv2.GaussianBlur(gray, (kernel_size, kernel_size), 0)
+    #edges = cv2.Canny(blur_gray, 1, 10)
+    #edges = cv2.cvtColor(edges, cv2.COLOR_GRAY2RGB)
+    #tmp_img = np.bitwise_or(tmp_img, edges)
+
+    ##blur = cv2.bilateralFilter(tmp_img, 3, 75, 75)
+    ##edges = cv2.Canny(blur, 150, 250, 3)
+    ##edges = cv2.cvtColor(edges, cv2.COLOR_GRAY2RGB)
+    # Overlap image and edges together
+    ##tmp_img = np.bitwise_or(tmp_img, edges)
     #tmp_img = cv2.addWeighted(tmp_img, 1 - edges_val, edges, edges_val, 0)
     return tmp_img
 
@@ -712,7 +725,9 @@ def convert_video_to_images(video_path, n_frames, desired_img_format):
                 # save each frame (we use this format to avoid repetitions)
                 frame_name =  '{}_{}{}'.format(video_name_ext, i, desired_img_format)
                 frame_path = os.path.join(file_path, frame_name)
-                cv2.imwrite(frame_path, frame)
+                resize = cv2.resize(frame, (480, 270))
+                # cv2.imwrite(frame_path, frame)
+                cv2.imwrite(frame_path, resize)
         # release the video capture object
         cap.release()
     return file_path, video_name_ext
@@ -1066,6 +1081,7 @@ if __name__ == '__main__':
     # initialize
     set_img_index(0)
     edges_on = False
+    hiding_on = False
 
     display_text('Welcome!\n Press [h] for help.', 4000)
 
@@ -1094,7 +1110,8 @@ if __name__ == '__main__':
         if dragBBox.anchor_being_dragged is not None:
             dragBBox.handler_mouse_move(mouse_x, mouse_y)
         # draw already done bounding boxes
-        tmp_img = draw_bboxes_from_file(tmp_img, annotation_paths, width, height)
+        if hiding_on == False:
+            tmp_img = draw_bboxes_from_file(tmp_img, annotation_paths, width, height)
         # if bounding box is selected add extra info
         if is_bbox_selected:
             tmp_img = draw_info_bb_selected(tmp_img)
@@ -1115,28 +1132,35 @@ if __name__ == '__main__':
 
         if dragBBox.anchor_being_dragged is None:
             ''' Key Listeners START '''
-            if pressed_key == ord('a') or pressed_key == ord('d'):
+            # if pressed_key == ord('a') or pressed_key == ord('d'):
+            if pressed_key == ord('d') or pressed_key == ord('f'):
                 # show previous image key listener
-                if pressed_key == ord('a'):
+                if pressed_key == ord('d'):
                     img_index = decrease_index(img_index, last_img_index)
                 # show next image key listener
-                elif pressed_key == ord('d'):
+                elif pressed_key == ord('f'):
                     img_index = increase_index(img_index, last_img_index)
                 set_img_index(img_index)
                 cv2.setTrackbarPos(TRACKBAR_IMG, WINDOW_NAME, img_index)
-            elif pressed_key == ord('s') or pressed_key == ord('w'):
+            # elif pressed_key == ord('s') or pressed_key == ord('w'):
+            elif pressed_key == 32:
                 # change down current class key listener
-                if pressed_key == ord('s'):
-                    class_index = decrease_index(class_index, last_class_index)
+                # if pressed_key == ord('s'):
+                # class_index = decrease_index(class_index, last_class_index)
                 # change up current class key listener
-                elif pressed_key == ord('w'):
-                    class_index = increase_index(class_index, last_class_index)
+                #elif pressed_key == ord('w'):
+                class_index = increase_index(class_index, last_class_index)
                 draw_line(tmp_img, mouse_x, mouse_y, height, width, color)
                 set_class_index(class_index)
                 cv2.setTrackbarPos(TRACKBAR_CLASS, WINDOW_NAME, class_index)
                 if is_bbox_selected:
                     obj_to_edit = img_objects[selected_bbox]
                     edit_bbox(obj_to_edit, 'change_class:{}'.format(class_index))
+            elif pressed_key == ord('r'):
+                if hiding_on == True:
+                    hiding_on = False
+                else:
+                    hiding_on = True
             # help key listener
             elif pressed_key == ord('h'):
                 text = ('[e] to show edges;\n'
