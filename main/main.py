@@ -1234,8 +1234,10 @@ if __name__ == '__main__':
             elif pressed_key == ord('r'):
                 if hiding_on == True:
                     hiding_on = False
+                    display_text('Hiding off!', 1000)
                 else:
                     hiding_on = True
+                    display_text('Hiding on!', 1000)
             # help key listener
             elif pressed_key == ord('h'):
                 text = ('[e] to show edges;\n'
